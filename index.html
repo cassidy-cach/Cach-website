@@ -54,6 +54,8 @@
     /* ── Fixed background layers (Fix 2) ──
        Each sits behind all sections. Sections are transparent.
        Cross-fades via CSS opacity 0.8s ease on .active toggle. */
+    /* Fallback: hero bg always visible before JS runs.
+       Once JS adds .js-ready to <html>, the scroll handler takes over. */
     .bg-layer {
       position: fixed;
       inset: 0;
@@ -62,6 +64,8 @@
       pointer-events: none;
       will-change: opacity;
     }
+    #bg-hero-layer { opacity: 1; }               /* hero visible by default */
+    .js-ready .bg-layer { opacity: 0; }          /* JS resets; scroll drives it */
 
     /* Dark tint baked into the fixed layer so it cross-fades cleanly
        (no scrolling section overlay = no seam between pages). */
@@ -215,8 +219,8 @@
     #logo-hero {
       max-width: min(560px, 80vw);
       width: 100%;
-      opacity: 0;
     }
+    .js-ready #logo-hero { opacity: 0; }
 
     .hero-tagline {
       font-family: 'Glacial Indifference', sans-serif;
@@ -225,8 +229,8 @@
       letter-spacing: 0.44em;
       text-transform: uppercase;
       color: rgba(255, 255, 255, 0.78);
-      opacity: 0;
     }
+    .js-ready .hero-tagline { opacity: 0; }
 
     .scroll-cue {
       position: absolute;
@@ -237,8 +241,8 @@
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
-      opacity: 0;
     }
+    .js-ready .scroll-cue { opacity: 0; }
     .scroll-cue-label {
       font-family: 'Glacial Indifference', sans-serif;
       font-size: 0.6rem;
@@ -287,6 +291,8 @@
     }
     .about-heading .char {
       display: inline-block;
+    }
+    .js-ready .about-heading .char {
       opacity: 0;
       transform: translateY(10px);
     }
@@ -312,8 +318,8 @@
       font-size: clamp(1rem, 1.55vw, 1.18rem);
       line-height: 1.75;
       color: #2e2e2e;
-      opacity: 0;
     }
+    .js-ready .about-body { opacity: 0; }
     .thought-annotation {
       border-left: 3px solid #FC2F78;
       padding-left: 1rem;
@@ -322,8 +328,8 @@
       font-size: clamp(0.92rem, 1.35vw, 1.05rem);
       color: #FC2F78;
       line-height: 1.6;
-      opacity: 0;
     }
+    .js-ready .thought-annotation { opacity: 0; }
 
     /* ════════════════════════════════
        SECTION 3 — OFFERINGS
@@ -344,8 +350,8 @@
       text-shadow: 0 2px 18px rgba(120, 60, 0, 0.3);
       letter-spacing: 0.01em;
       text-align: center;
-      opacity: 0;
     }
+    .js-ready .offerings-header { opacity: 0; }
 
     .cards-grid {
       display: grid;
