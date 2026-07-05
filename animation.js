@@ -29,8 +29,9 @@ ScrollTrigger.config({ ignoreMobileResize: true });
 
 /* ── Selectors ── */
 const sections   = [...document.querySelectorAll('.section')];
-const dotButtons = [...document.querySelectorAll('.nav-dot')];
-const navDotsEl  = document.getElementById('nav-dots');
+const pnavPoints = [...document.querySelectorAll('.pnav-point')];
+const pnavMarker = document.querySelector('.pnav-marker');
+const pnavFill   = document.querySelector('.pnav-fill');
 
 /* ── Background layers ── */
 const bgLayerEls = [
@@ -44,13 +45,29 @@ let currentSection = 0;
 let navJumpIndex   = null;   // set while a nav-dot/hero-nav jump is in progress
 
 /* ══════════════════════════════════════════════════════════
-   NAV DOTS
+   PROGRESS RAIL — active tick + glowing marker position
 ══════════════════════════════════════════════════════════ */
-const lightSections = new Set([1, 2, 3]);
-
 function updateNavDots(idx) {
-  dotButtons.forEach(b => b.classList.toggle('active', +b.dataset.index === idx));
-  navDotsEl.classList.toggle('dark', lightSections.has(idx));
+  pnavPoints.forEach(p => p.classList.toggle('active', +p.dataset.index === idx));
+}
+
+/* Move the glowing marker + fill to reflect overall scroll progress.
+   Rect-based so it's scroller-agnostic (works whether the viewport, <html>
+   or <body> is the actual scroll container — and on both desktop & mobile). */
+function updateProgressRail() {
+  if (!pnavMarker || !sections.length) return;
+  const firstR = sections[0].getBoundingClientRect();
+  const lastR  = sections[sections.length - 1].getBoundingClientRect();
+  const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+
+  const scrolled = -firstR.top;                       // distance scrolled from the top
+  const total    = (lastR.bottom - firstR.top) - vh;  // total scrollable distance
+  let progress = total > 0 ? scrolled / total : 0;
+  progress = Math.min(1, Math.max(0, isNaN(progress) || !isFinite(progress) ? 0 : progress));
+
+  const pct = (progress * 100) + '%';
+  pnavMarker.style.top = pct;
+  if (pnavFill) pnavFill.style.height = pct;
 }
 
 /* Play a section's entrance animation directly (used for nav jumps, where
@@ -60,8 +77,8 @@ function playSectionEntrance(idx) {
     zIn(document.querySelector('.about-content'));
     animateAboutContent();
   } else if (idx === 2) {
-    setupCardDeck();
-    zIn(document.querySelector('.offerings-content'), animateCardDeck);
+    setupOfferings();
+    zIn(document.querySelector('.offerings-content'), animateOfferings);
   } else if (idx === 3) {
     zIn(document.querySelector('.contact-content'));
     gsap.delayedCall(0.75, dotJumpToForm);
@@ -83,12 +100,12 @@ function navigateTo(idx) {
   });
 }
 
-dotButtons.forEach(btn => {
+pnavPoints.forEach(btn => {
   btn.addEventListener('click', () => navigateTo(+btn.dataset.index));
 });
 
-/* Hero top-right nav links (About / Work / Contact) */
-const heroNavMap = { '#about': 1, '#offerings': 2, '#contact': 3 };
+/* Hero top-right nav links (Home / About / Services / Contact) */
+const heroNavMap = { '#hero': 0, '#about': 1, '#offerings': 2, '#contact': 3 };
 document.querySelectorAll('.hero-nav a').forEach(a => {
   a.addEventListener('click', e => {
     const idx = heroNavMap[a.getAttribute('href')];
@@ -98,8 +115,29 @@ document.querySelectorAll('.hero-nav a').forEach(a => {
   });
 });
 
+/* In-page CTA buttons with data-goto (e.g. "See what we do" → offerings).
+   navigateTo pre-triggers the target section's animation on arrival. */
+document.querySelectorAll('[data-goto]').forEach(btn => {
+  btn.addEventListener('click', () => navigateTo(+btn.dataset.goto));
+});
+
+/* True on phones/small screens — where sections flow instead of snapping
+   one-viewport-per-section, so the scroll-driven cross-fade math doesn't
+   apply and we switch backgrounds discretely via the section observer. */
+const isSmallScreen = () => window.matchMedia('(max-width: 860px)').matches;
+
+/* Discrete background switch (used on mobile). Clears inline opacity so the
+   CSS `.bg-layer.active { opacity: 1 }` + transition drive the fade. */
+function activateBgLayer(idx) {
+  bgLayerEls.forEach((el, i) => {
+    if (!el) return;
+    el.style.opacity = '';
+    el.classList.toggle('active', i === idx);
+  });
+}
+
 /* ══════════════════════════════════════════════════════════
-   BACKGROUND SCROLL CROSS-FADE
+   BACKGROUND SCROLL CROSS-FADE (desktop)
    Each page keeps its own solid colour. During scroll the
    current layer stays fully opaque underneath while the next
    layer fades in on top — a clean wipe, no white bleed-through.
@@ -108,6 +146,8 @@ function setupBgBlend() {
   const first = sections[0];
 
   function update() {
+    updateProgressRail();             // marker runs on all screen sizes
+    if (isSmallScreen()) return;      // mobile uses discrete bg (observer)
     const vh = window.innerHeight ||
                document.documentElement.clientHeight ||
                (first ? first.offsetHeight : 0) || 800;
@@ -146,7 +186,8 @@ function setupBgBlend() {
     try { t.addEventListener('scroll', update, { passive: true }); } catch(e) {}
   });
   window.addEventListener('resize', update);
-  update();
+  if (isSmallScreen()) activateBgLayer(0);   // mobile: start on hero bg
+  else update();
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -159,6 +200,7 @@ const sectionObserver = new IntersectionObserver(entries => {
     if (idx === currentSection) return;
     currentSection = idx;
     updateNavDots(idx);
+    if (isSmallScreen()) activateBgLayer(idx);   // mobile: switch bg per section
     document.dispatchEvent(new CustomEvent('sectionChange', {
       detail: { index: idx, id: entry.target.id }
     }));
@@ -212,6 +254,8 @@ function animateAboutContent() {
   const heading     = document.getElementById('about-heading');
   const body        = document.getElementById('about-body');
   const annotations = [...document.querySelectorAll('.thought-annotation')];
+  const cta         = document.querySelector('.about-cta');
+  const blob        = document.querySelector('.about-right');
 
   wrapChars(heading);
   const chars = [...heading.querySelectorAll('.char')];
@@ -219,79 +263,152 @@ function animateAboutContent() {
   gsap.set(chars,       { opacity: 0, y: 10 });
   gsap.set(body,        { opacity: 0 });
   gsap.set(annotations, { opacity: 0 });
+  gsap.set(cta,         { opacity: 0, y: 10 });
 
   const stagger      = 0.04;
   const charDur      = 0.4;
   const headingTotal = chars.length * stagger + charDur;
 
+  /* Heading (left) reveals as before. */
   gsap.to(chars, { opacity: 1, y: 0, duration: charDur, stagger, ease: 'power2.out' });
-  gsap.to(body,        { opacity: 1, duration: 0.55, ease: 'power2.out', delay: headingTotal * 0.5 });
-  gsap.to(annotations, { opacity: 1, duration: 0.55, stagger: 0.18, ease: 'power2.out', delay: headingTotal * 0.75 });
+
+  /* ── Blob (right): emerges from the LEFT edge of the screen, travels
+     across (behind the heading), settles into the right column, then
+     turns white + glows as the copy fades in. ── */
+  const PINK_SHADOW  = '0 0 0px rgba(255,255,255,0), 0 0 0px rgba(255,255,255,0), 0 18px 40px rgba(252,47,120,0.40), 0 34px 70px rgba(252,47,120,0.28)';
+  const WHITE_SHADOW = '0 0 34px rgba(255,255,255,0.75), 0 0 80px rgba(255,255,255,0.5), 0 12px 30px rgba(40,0,25,0.16), 0 34px 70px rgba(40,0,25,0.20)';
+
+  /* Measure the blob's resting position to compute how far left it must
+     start so it emerges from off the left edge of the screen. */
+  gsap.set(blob, { clearProps: 'transform' });
+  const rect   = blob.getBoundingClientRect();
+  const startX = -(rect.left + rect.width * 0.4);   // ~40% off the left edge
+
+  /* Apply the pink/off-screen state SYNCHRONOUSLY (same frame) so the
+     white resting blob never flashes on screen before the travel starts. */
+  gsap.set(blob, {
+    x: startX,
+    scale: 0.9,
+    backgroundColor: '#FC2F78',
+    boxShadow: PINK_SHADOW
+  });
+  gsap.set([body, annotations], { opacity: 0 });
+
+  const tl = gsap.timeline({ delay: headingTotal * 0.15 });
+
+  /* travel across the screen to its resting place on the right */
+  tl.to(blob, { x: 0, scale: 1, duration: 1.25, ease: 'power2.inOut' });
+
+  /* turn white + glow as it settles */
+  tl.to(blob, { backgroundColor: '#ffffff', boxShadow: WHITE_SHADOW, duration: 0.5, ease: 'power2.out' }, '-=0.4');
+
+  /* copy appears inside the (now white) blob */
+  tl.to(body,        { opacity: 1, duration: 0.5, ease: 'power2.out' }, '-=0.15');
+  tl.to(annotations, { opacity: 1, duration: 0.5, stagger: 0.16, ease: 'power2.out' }, '-=0.25');
+  tl.to(cta,         { opacity: 1, y: 0, duration: 0.45, ease: 'back.out(1.6)' }, '-=0.15');
 }
 
 /* ══════════════════════════════════════════════════════════
-   CARD DECK — visible stacked pile → deal out into grid
-   Cards begin piled at grid centre like a hand-held stack
-   (slight rotation + offset, layered z-index), then deal out
-   one-by-one to their grid slots with a 3D lift + overshoot.
+   OFFERINGS — a pink dot bounces in and, on each bounce, "opens"
+   one of the five offering circles (the same dot idea as the
+   contact tittle). Circles pop open one-by-one with their tagline.
 ══════════════════════════════════════════════════════════ */
-function setupCardDeck() {
-  const frames = [...document.querySelectorAll('.card-frame')];
-  const grid   = document.querySelector('.cards-grid');
+function setupOfferings() {
+  const circles  = [...document.querySelectorAll('.offer-circle')];
+  const taglines = [...document.querySelectorAll('.offer-tagline')];
 
-  gsap.set(frames, {
-    x: 0, y: 0, scale: 1, opacity: 1,
-    rotateX: 0, rotateY: 0, rotation: 0,
-    transformPerspective: 1000, zIndex: 'auto'
-  });
+  /* hide circles + taglines; layout space is preserved (transform only) */
+  gsap.set(circles,  { scale: 0, opacity: 0, transformOrigin: '50% 50%' });
+  gsap.set(taglines, { opacity: 0, y: 12 });
 
-  const gRect  = grid.getBoundingClientRect();
-  const cxGrid = gRect.width  / 2;
-  const cyGrid = gRect.height / 2;
+  /* reset hover-ready state so the CSS transition doesn't fight re-animation */
+  document.querySelectorAll('.offer-item').forEach(it => it.classList.remove('ready'));
 
-  frames.forEach((frame, i) => {
-    const r  = frame.getBoundingClientRect();
-    const dx = cxGrid - ((r.left - gRect.left) + r.width  / 2);
-    const dy = cyGrid - ((r.top  - gRect.top)  + r.height / 2);
-    const depth = i;  // 0 = top card, larger index = further back
-
-    /* A neat, tidy stack: each card behind the top one is stepped by a
-       small uniform offset and scaled back slightly, so the deck edges
-       line up cleanly instead of scattering. */
-    gsap.set(frame, {
-      x: dx + depth * 5,
-      y: dy + depth * 6,
-      rotation: 0,
-      rotateX: 0,
-      scale: 1 - depth * 0.035,
-      opacity: 1,
-      transformOrigin: '50% 50%',
-      zIndex: frames.length - i    // first card sits on top, deals first
-    });
-  });
+  /* clear any leftover dot from a previous run */
+  document.querySelectorAll('.bounce-dot').forEach(d => d.remove());
 }
 
-function animateCardDeck() {
-  const frames = [...document.querySelectorAll('.card-frame')];
-  const header = document.querySelector('.offerings-header');
+function animateOfferings() {
+  const row      = document.querySelector('.circles-row');
+  const header   = document.querySelector('.offerings-header');
+  const circles  = [...document.querySelectorAll('.offer-circle')];
+  const taglines = [...document.querySelectorAll('.offer-tagline')];
+  if (!row || !circles.length) return;
 
+  const sub = document.querySelector('.offerings-sub');
   gsap.to(header, { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out' });
+  gsap.to(sub,    { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out', delay: 0.12 });
 
-  /* Deal each card out in grid order with a lift, a settle, and an
-     overshoot so the layout feels physical and dynamic. */
-  const tl = gsap.timeline();
-  frames.forEach((frame, i) => {
-    tl.to(frame, {
-      x: 0, y: 0, rotation: 0, rotateX: 0,
-      duration: 0.62,
-      ease: 'back.out(1.5)'
-    }, i * 0.13)
-    /* brief lift mid-flight for depth (owns scale to avoid conflict) */
-    .to(frame, {
-      keyframes: { scale: [1, 1.06, 1] },
-      duration: 0.42, ease: 'sine.inOut'
-    }, i * 0.13);
+  const items = [...document.querySelectorAll('.offer-item')];
+
+  /* Reveal circle i with a pop + its tagline. Once the pop finishes, clear
+     the inline transform and flag .ready so CSS hover effects can take over. */
+  function openCircle(i) {
+    gsap.to(circles[i], {
+      scale: 1, opacity: 1, duration: 0.5, ease: 'back.out(1.8)',
+      onComplete: () => {
+        gsap.set(circles[i], { clearProps: 'transform' });
+        if (items[i]) items[i].classList.add('ready');
+      }
+    });
+    gsap.to(taglines[i], { opacity: 1, y: 0, duration: 0.45, ease: 'power2.out', delay: 0.12,
+      onComplete: () => gsap.set(taglines[i], { clearProps: 'opacity' }) });
+  }
+
+  /* On small screens the circles wrap onto multiple rows, so the bouncing
+     dot path doesn't apply — just pop the circles in with a stagger. The
+     deliverables list is already visible by default (CSS). */
+  if (isSmallScreen()) {
+    circles.forEach((_, i) => gsap.delayedCall(i * 0.12, () => openCircle(i)));
+    return;
+  }
+
+  /* Measure each circle's centre relative to the row. */
+  const rowRect = row.getBoundingClientRect();
+  const pts = circles.map(c => {
+    const r = c.getBoundingClientRect();
+    return { x: r.left - rowRect.left + r.width / 2,
+             y: r.top  - rowRect.top  + r.height / 2 };
   });
+
+  const dotSize = 22;
+  const dot = document.createElement('div');
+  dot.className = 'bounce-dot';
+  dot.style.width = dot.style.height = dotSize + 'px';
+  row.appendChild(dot);
+
+  const px = i => pts[i].x - dotSize / 2;   // dot left for circle i
+  const py = i => pts[i].y - dotSize / 2;   // dot top  for circle i
+
+  gsap.set(dot, { x: px(0), y: -150, opacity: 1, scale: 1 });
+
+  const tl = gsap.timeline({ delay: 0.15 });
+  const hopDur = 0.5;
+  let cursor = 0;
+
+  pts.forEach((p, i) => {
+    if (i === 0) {
+      /* drop in from above onto the first circle */
+      tl.to(dot, { y: py(0), duration: 0.5, ease: 'power2.in' }, cursor);
+      cursor += 0.5;
+    } else {
+      /* arc: travel x straight, y up-then-down, landing on circle i */
+      const apex = Math.min(py(i), py(i - 1)) - (150 - i * 16);
+      tl.to(dot, { x: px(i),  duration: hopDur,     ease: 'none'       }, cursor);
+      tl.to(dot, { y: apex,   duration: hopDur / 2, ease: 'power2.out' }, cursor);
+      tl.to(dot, { y: py(i),  duration: hopDur / 2, ease: 'power2.in'  }, cursor + hopDur / 2);
+      cursor += hopDur;
+    }
+    /* squash on impact + open the circle */
+    tl.to(dot, { scaleX: 1.5, scaleY: 0.6, duration: 0.09, yoyo: true, repeat: 1,
+                 transformOrigin: '50% 100%' }, cursor);
+    tl.call(openCircle, [i], cursor);
+    cursor += 0.02;
+  });
+
+  /* dot vanishes into the last circle */
+  tl.to(dot, { scale: 0, opacity: 0, duration: 0.35, ease: 'power2.in' }, cursor + 0.2);
+  tl.call(() => dot.remove(), [], cursor + 0.6);
 }
 
 /* ══════════════════════════════════════════════════════════
@@ -354,14 +471,14 @@ function setupScrollTransitions() {
     trigger: '#offerings', start: 'top 52%',
     onEnter: () => {
       if (navJumpIndex !== null) return;
-      setupCardDeck();
-      zIn(offeringsContent, animateCardDeck);
+      setupOfferings();
+      zIn(offeringsContent, animateOfferings);
     },
     onLeave:     () => zOut(offeringsContent),
     onEnterBack: () => {
       if (navJumpIndex !== null) return;
-      setupCardDeck();
-      zIn(offeringsContent, animateCardDeck);
+      setupOfferings();
+      zIn(offeringsContent, animateOfferings);
     },
     onLeaveBack: () => zOut(offeringsContent)
   });
