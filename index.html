@@ -43,6 +43,8 @@
     html, body, * {
       cursor: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='28' viewBox='0 0 28 28'%3E%3Cpath d='M6 3 L6 23 L11 18 L14.6 25 L17.6 23.6 L14 16.8 L21 16.8 Z' fill='%23FC2F78' stroke='white' stroke-width='1.3' stroke-linejoin='round'/%3E%3C/svg%3E") 6 3, auto;
     }
+    /* text fields keep the I-beam so typing feels right */
+    input, textarea { cursor: text; }
     html::-webkit-scrollbar { display: none; }
 
     body {
@@ -140,37 +142,90 @@
     }
 
     /* ── Nav Dots ── */
-    #nav-dots {
+    /* ── Scroll-progress rail (right side) ── */
+    #progress-nav {
       position: fixed;
-      right: 2rem;
+      right: 2.1rem;
       top: 50%;
       transform: translateY(-50%);
+      height: 240px;
+      width: 12px;
       z-index: 1000;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      align-items: center;
     }
-    .nav-dot {
-      width: 8px;
-      height: 8px;
+    /* dim full-height track */
+    .pnav-track {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      bottom: 0;
+      width: 1.5px;
+      background: rgba(255, 255, 255, 0.25);
+      border-radius: 2px;
+    }
+    /* brighter fill from top down to the marker */
+    .pnav-fill {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 0;
+      height: 0%;
+      width: 1.5px;
+      background: rgba(255, 255, 255, 0.75);
+      border-radius: 2px;
+      transition: height 0.18s linear;
+    }
+    /* glowing marker that glides with scroll */
+    .pnav-marker {
+      position: absolute;
+      left: 50%;
+      top: 0%;
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+      background: #ffffff;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 8px rgba(255,255,255,0.95), 0 0 18px rgba(255,255,255,0.55);
+      transition: top 0.18s linear;
+      pointer-events: none;
+    }
+    /* subtle section tick points */
+    .pnav-point {
+      position: absolute;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: rgba(255, 255, 255, 0.4);
-      cursor: pointer;
       border: none;
       padding: 0;
-      transition: transform 0.3s ease, background 0.3s ease;
+      cursor: pointer;
+      transition: width 0.25s ease, height 0.25s ease, background 0.25s ease;
     }
-    .nav-dot.active {
-      transform: scale(1.65);
-      background: rgba(255, 255, 255, 0.92);
+    .pnav-point.active {
+      width: 9px;
+      height: 9px;
+      background: #ffffff;
     }
-    #nav-dots.dark .nav-dot {
-      background: rgba(0, 0, 0, 0.2);
+    /* labels — hidden until the rail is hovered */
+    .pnav-label {
+      position: absolute;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-family: 'Glacial Indifference', sans-serif;
+      font-size: 0.6rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.92);
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+      pointer-events: none;
     }
-    #nav-dots.dark .nav-dot.active {
-      background: rgba(0, 0, 0, 0.65);
-    }
+    #progress-nav:hover .pnav-label { opacity: 1; }
 
     /* ── Hero nav ── */
     .hero-nav {
@@ -184,10 +239,12 @@
     }
     .hero-nav a {
       font-family: 'Glacial Indifference', sans-serif;
-      font-size: 0.68rem;
-      letter-spacing: 0.25em;
+      font-size: 0.74rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.75);
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow: 0 1px 10px rgba(0, 0, 0, 0.4);
       text-decoration: none;
       transition: color 0.2s ease;
     }
@@ -206,19 +263,19 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: center;       /* copy centred vertically & horizontally */
     }
 
     .hero-content {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 1.75rem;
+      gap: 2.25rem;
       text-align: center;
     }
 
     #logo-hero {
-      max-width: min(560px, 80vw);
+      max-width: min(780px, 92vw);
       width: 100%;
     }
     .js-ready #logo-hero { opacity: 0; }
@@ -226,10 +283,13 @@
     .hero-tagline {
       font-family: 'Glacial Indifference', sans-serif;
       font-weight: 300;
-      font-size: clamp(0.62rem, 1.5vw, 0.85rem);
-      letter-spacing: 0.44em;
+      font-size: clamp(0.72rem, 1.5vw, 0.95rem);
+      letter-spacing: 0.14em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.78);
+      color: rgba(255, 255, 255, 0.82);
+      max-width: 46ch;
+      line-height: 1.85;
+      text-align: center;
     }
     .js-ready .hero-tagline { opacity: 0; }
 
@@ -246,10 +306,25 @@
     .js-ready .scroll-cue { opacity: 0; }
     .scroll-cue-label {
       font-family: 'Glacial Indifference', sans-serif;
-      font-size: 0.6rem;
+      font-size: 0.62rem;
       letter-spacing: 0.3em;
       text-transform: uppercase;
-      color: rgba(255, 255, 255, 0.35);
+      color: rgba(255, 255, 255, 0.85);
+      animation: scrollGlow 1.6s ease-in-out infinite;
+    }
+    /* Pulsing glow so it's obvious you need to scroll */
+    @keyframes scrollGlow {
+      0%, 100% {
+        opacity: 0.45;
+        text-shadow: 0 0 0 rgba(255,255,255,0);
+      }
+      50% {
+        opacity: 1;
+        text-shadow: 0 0 10px rgba(255,255,255,0.9), 0 0 22px rgba(255,255,255,0.5);
+      }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .scroll-cue-label { animation: none; opacity: 0.85; }
     }
     .scroll-cue-line {
       width: 1px;
@@ -266,22 +341,24 @@
       position: relative;
       z-index: 2;
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      max-width: 1040px;
-      width: 88%;
+      grid-template-columns: 0.8fr 1.2fr;   /* wider right column for the blob */
+      gap: 3rem;
+      max-width: 1140px;
+      width: 90%;
       align-items: center;
     }
 
     .about-left {
       min-width: 0;
+      position: relative;
+      z-index: 2;                     /* heading sits above the travelling blob */
     }
 
     /* FIX 1: Two clean lines, no mid-word breaks */
     .about-heading {
       font-family: 'Marcellus', serif;
-      font-size: clamp(2.3rem, 4.4vw, 3.7rem);
-      line-height: 1.18;
+      font-size: clamp(1.6rem, 3vw, 2.5rem);
+      line-height: 1.22;
       color: #ffffff;
       text-shadow: 0 2px 18px rgba(120, 0, 50, 0.25);
       hyphens: none;
@@ -298,39 +375,68 @@
       transform: translateY(10px);
     }
 
+    /* Organic blob that holds the About copy. Final resting state is white
+       + glow; JS animates it in from a pink blob peeking off the left. */
     .about-right {
       min-width: 0; /* prevents grid overflow */
+      position: relative;
+      z-index: 1;                     /* travels behind the heading */
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 1.1rem;
       background: #ffffff;
-      border-radius: 22px;
-      padding: 2.25rem 2.25rem;
+      border-radius: 40% 60% 52% 48% / 40% 42% 58% 60%;
+      padding: 3.6rem 3.4rem;
+      min-height: 520px;
+      justify-content: center;
       box-shadow:
-        0 0 0 1px rgba(255, 255, 255, 0.7),          /* crisp edge        */
-        0 0 30px rgba(255, 255, 255, 0.65),          /* tight white glow  */
-        0 0 70px rgba(255, 255, 255, 0.40),          /* soft outer glow   */
-        0 8px 22px rgba(40, 0, 25, 0.14),            /* depth — mid       */
-        0 30px 70px rgba(40, 0, 25, 0.22);           /* depth — drop      */
-      border: 1px solid rgba(255, 255, 255, 0.6);
+        0 0 34px rgba(255, 255, 255, 0.7),           /* white glow — tight */
+        0 0 78px rgba(255, 255, 255, 0.45),          /* white glow — soft  */
+        0 12px 30px rgba(40, 0, 25, 0.16),           /* depth              */
+        0 34px 70px rgba(40, 0, 25, 0.20);
+      will-change: transform, background-color, box-shadow;
     }
     .about-body {
       font-family: 'Glacial Indifference', sans-serif;
-      font-size: clamp(1rem, 1.55vw, 1.18rem);
-      line-height: 1.75;
+      font-size: clamp(0.9rem, 1.35vw, 1.05rem);
+      line-height: 1.65;
       color: #2e2e2e;
     }
     .js-ready .about-body { opacity: 0; }
     .thought-annotation {
-      border-left: 3px solid #FC2F78;
-      padding-left: 1rem;
       font-family: 'Glacial Indifference', sans-serif;
       font-style: italic;
-      font-size: clamp(0.92rem, 1.35vw, 1.05rem);
+      font-weight: 700;
+      font-size: clamp(0.85rem, 1.2vw, 0.96rem);
       color: #FC2F78;
-      line-height: 1.6;
+      line-height: 1.5;
+      text-align: center;
     }
     .js-ready .thought-annotation { opacity: 0; }
+
+    .about-cta {
+      align-self: center;
+      margin-top: 0.6rem;
+      font-family: 'Glacial Indifference', sans-serif;
+      font-weight: 700;
+      font-size: 0.78rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #ffffff;
+      background: #FC2F78;
+      border: none;
+      border-radius: 100px;
+      padding: 0.8rem 2rem;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(252, 47, 120, 0.35);
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+    .about-cta:hover {
+      background: #e01f66;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(252, 47, 120, 0.45);
+    }
+    .js-ready .about-cta { opacity: 0; }
 
     /* ════════════════════════════════
        SECTION 3 — OFFERINGS
@@ -354,138 +460,142 @@
     }
     .js-ready .offerings-header { opacity: 0; }
 
-    .cards-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 1.1rem;
-      max-width: 1180px;
-      width: 92%;
-      perspective: 1400px;          /* shared depth for the deck */
-      transform-style: preserve-3d;
+    .offerings-sub {
+      font-family: 'Glacial Indifference', sans-serif;
+      font-size: clamp(0.85rem, 1.25vw, 1.02rem);
+      font-weight: 700;
+      color: #ffffff;
+      text-align: center;
+      text-shadow: 0 1px 12px rgba(120, 60, 0, 0.3);
+      margin-top: -1rem;
     }
+    .js-ready .offerings-sub { opacity: 0; }
 
-    .card-frame {
-      will-change: transform, opacity;
-      transform-style: preserve-3d;
-    }
-    .card {
+    /* ── Offering circles (bounced open by the pink dot) ── */
+    .circles-row {
       position: relative;
-      background: linear-gradient(135deg, rgba(255,255,255,0.78), rgba(255,255,255,0.52));
-      backdrop-filter: blur(18px) saturate(1.3);
-      -webkit-backdrop-filter: blur(18px) saturate(1.3);
-      border: 1px solid rgba(255,255,255,0.6);
-      border-radius: 16px;
-      padding: 0.9rem 0.9rem 0.75rem;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      gap: clamp(0.8rem, 2vw, 2rem);
+      width: 94%;
+      max-width: 1200px;
+      padding-top: 2rem;             /* room for the dot to bounce in */
+    }
+    .offer-item {
+      flex: 1 1 0;
+      max-width: 220px;
       display: flex;
       flex-direction: column;
-      gap: 0.45rem;
-      height: 100%;
-      box-shadow:
-        inset 0 1px 1px rgba(255,255,255,0.9),   /* top inner sheen   */
-        inset 0 -8px 18px rgba(255,255,255,0.25),/* soft inner glow   */
-        0 2px 6px rgba(0,0,0,0.06),
-        0 14px 30px rgba(0,0,0,0.16),
-        0 30px 60px rgba(0,0,0,0.13);
-      overflow: hidden;
+      align-items: center;
+      gap: 1.1rem;
     }
-    /* Glass gloss — brighter sheen catching light on opposite corners */
-    .card::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(
-        125deg,
-        rgba(255,255,255,0.85) 0%,
-        rgba(255,255,255,0.25) 16%,
-        rgba(255,255,255,0)    38%,
-        rgba(255,255,255,0)    60%,
-        rgba(255,255,255,0.22) 82%,
-        rgba(255,255,255,0.6)  100%);
-      pointer-events: none;
-      z-index: 3;
-    }
-    /* Specular glint — a soft diagonal light streak across the whole face */
-    .card::after {
-      content: '';
-      position: absolute;
-      top: -40%;
-      left: -25%;
-      width: 45%;
-      height: 200%;
-      background: linear-gradient(
-        90deg,
-        rgba(255,255,255,0)    0%,
-        rgba(255,255,255,0.65) 50%,
-        rgba(255,255,255,0)    100%);
-      transform: rotate(20deg);
-      filter: blur(7px);
-      pointer-events: none;
-      z-index: 5;            /* sits above content as a true reflection */
-      opacity: 0.7;
-    }
-    /* keep card content above the base gloss layer */
-    .card > * { position: relative; z-index: 4; }
-    .card-image {
-      width: 100%;
-      height: 140px;
-      background: #f0f0f0;
-      border-radius: 8px;
-      flex-shrink: 0;
-      margin-bottom: 0.15rem;
+    .offer-circle {
+      width: clamp(96px, 12vw, 158px);
+      height: clamp(96px, 12vw, 158px);
+      border-radius: 50%;
       display: flex;
-      align-items: flex-end;
-      padding: 0.85rem;
-    }
-    .card-title {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 0.5rem;
       font-family: 'Marcellus', serif;
-      font-size: clamp(1.15rem, 1.8vw, 1.55rem);
+      font-size: clamp(0.95rem, 1.35vw, 1.3rem);
       color: #ffffff;
       line-height: 1.1;
-      text-shadow: 0 1px 8px rgba(0,0,0,0.28);
+      box-shadow:
+        0 0 0 6px rgba(255,255,255,0.18),
+        0 10px 26px rgba(0,0,0,0.22),
+        0 2px 8px rgba(0,0,0,0.14);
+      will-change: transform, opacity;
     }
-    .card-post-header {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .card-avatar {
-      width: 24px;
-      height: 24px;
-      border-radius: 50%;
-      background: #000000;
-      flex-shrink: 0;
-    }
-    .card-username {
-      width: 80px;
-      height: 8px;
-      background: #000000;
-      border-radius: 4px;
-    }
-    .card-keyword {
-      font-family: 'Marcellus', serif;
-      font-size: clamp(0.82rem, 1.3vw, 1rem);
-      color: #111;
-      line-height: 1.2;
-    }
-    .card-desc {
+    .offer-copy { width: 100%; }
+    .offer-tagline {
       font-family: 'Glacial Indifference', sans-serif;
-      font-size: clamp(0.74rem, 1.05vw, 0.86rem);
+      font-size: clamp(0.78rem, 1.05vw, 0.92rem);
       font-weight: 700;
-      color: #555;
-      line-height: 1.6;
-      flex: 1;
+      color: #ffffff;
+      text-align: center;
+      line-height: 1.5;
+      text-shadow: 0 1px 10px rgba(120,60,0,0.35);
+      transition: opacity 0.3s ease;
     }
-    .card-interactions {
-      display: flex;
-      gap: 0.7rem;
-      align-items: center;
-      padding-top: 0.15rem;
+
+    /* Expanded deliverables list. DEFAULT (touch / no-hover devices):
+       always visible under each circle so mobile users see everything.
+       On hover-capable screens it collapses and reveals on hover (below). */
+    .offer-detail {
+      list-style: none;
+      padding: 0;
+      margin: 0.55rem 0 0;
+      font-family: 'Glacial Indifference', sans-serif;
+      font-size: clamp(0.74rem, 1vw, 0.88rem);
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.92);
+      text-align: center;
+      text-shadow: 0 1px 10px rgba(120,60,0,0.35);
     }
-    .card-icon {
-      font-size: 0.82rem;
-      color: #000000;
-      line-height: 1;
-      user-select: none;
+    .offer-detail li {
+      padding: 0.22rem 0;
+      letter-spacing: 0.02em;
+    }
+    .offer-detail::before {
+      content: '';
+      display: block;
+      width: 30px;
+      height: 2px;
+      margin: 0 auto 0.65rem;
+      border-radius: 2px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    /* Circle depth transition (glow/lift) — enabled once .ready is set */
+    .offer-item.ready .offer-circle {
+      transition: transform 0.32s ease, box-shadow 0.32s ease;
+    }
+
+    /* ── Hover behaviour: ONLY on devices with a real pointer (desktop).
+       The deliverables are an ABSOLUTE overlay so revealing them doesn't
+       change any element's height — no layout shift, no page jump.
+       Touch devices skip all of this and keep the list in flow. ── */
+    @media (hover: hover) and (pointer: fine) {
+      .offer-copy { position: relative; }
+      .offer-detail {
+        position: absolute;
+        top: calc(100% + 0.5rem);
+        left: 0;
+        width: 100%;
+        margin: 0;
+        opacity: 0;
+        transform: translateY(-6px);
+        pointer-events: none;
+        transition: opacity 0.3s ease, transform 0.3s ease;
+      }
+      .offer-item:hover .offer-tagline { opacity: 0.35; }
+      .offer-item:hover .offer-detail {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      .offer-item.ready:hover .offer-circle {
+        transform: scale(1.08);
+        box-shadow:
+          0 0 0 9px rgba(255,255,255,0.32),
+          0 20px 44px rgba(0,0,0,0.32),
+          0 4px 14px rgba(0,0,0,0.2);
+      }
+    }
+
+    /* Pink dot that bounces in and opens each circle */
+    .bounce-dot {
+      position: absolute;
+      top: 0;
+      left: 0;
+      border-radius: 50%;
+      background: #FC2F78;
+      box-shadow: 0 0 12px rgba(252,47,120,0.75), 0 0 28px rgba(252,47,120,0.45);
+      z-index: 10;
+      pointer-events: none;
+      will-change: transform;
     }
 
     /* ════════════════════════════════
@@ -532,6 +642,38 @@
       margin-bottom: 1.5rem;
     }
 
+    /* Backup email — for anyone who'd rather not use the form */
+    .contact-email {
+      font-family: 'Glacial Indifference', sans-serif;
+      font-size: clamp(0.8rem, 1.1vw, 0.9rem);
+      color: rgba(255, 255, 255, 0.9);
+      line-height: 1.6;
+      margin-bottom: 1.6rem;
+    }
+    .contact-email a {
+      color: #ffffff;
+      font-weight: 700;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+      transition: border-color 0.2s ease;
+      white-space: nowrap;
+    }
+    .contact-email a:hover { border-bottom-color: #ffffff; }
+
+    /* Copyright footer pinned to the bottom of the contact page */
+    .contact-footer {
+      position: absolute;
+      bottom: 1.2rem;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-family: 'Glacial Indifference', sans-serif;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+      color: rgba(255, 255, 255, 0.6);
+      z-index: 2;
+    }
+
     /* FIX 3: Inline SVG wordmark — no img, no white box */
     .contact-wordmark {
       display: block;
@@ -543,6 +685,10 @@
       height: auto;
       display: block;
       overflow: visible;
+      /* same white glow as the homepage logo */
+      filter:
+        drop-shadow(0 0 14px rgba(255,255,255,0.65))
+        drop-shadow(0 0 38px rgba(255,255,255,0.30));
     }
 
     /* Form card */
@@ -634,25 +780,78 @@
       100% { text-shadow: 0 0 9px rgba(252,47,120,0.7),  0 0 20px rgba(252,47,120,0.4); }
     }
 
-    /* ── Responsive ── */
+    /* ══════════════════════════════════════════════════
+       RESPONSIVE — mobile / small screens
+       On small screens the fixed-viewport scroll-snap is
+       relaxed so every section grows with its content and
+       nothing is clipped. Desktop is unchanged.
+    ══════════════════════════════════════════════════ */
     @media (max-width: 860px) {
+      /* Let the page flow normally instead of snapping full viewports */
+      html { scroll-snap-type: none; }
+      .section {
+        height: auto;
+        min-height: 100vh;
+        scroll-snap-align: none;
+        scroll-snap-stop: normal;
+        overflow: visible;
+        padding: 6rem 1.25rem;
+        flex-direction: column;   /* children (content + footer) stack */
+      }
+      /* #contact has an ID-level padding that would otherwise win here */
+      #contact { padding: 6rem 1.25rem; }
+
+      /* Top-right nav — tighter so it fits narrow screens */
+      .hero-nav { top: 1.1rem; right: 1.1rem; gap: 1.25rem; }
+      .hero-nav a { font-size: 0.62rem; letter-spacing: 0.12em; }
+      #progress-nav { right: 0.9rem; height: 180px; }
+
+      /* About + contact stack to one column */
       .about-content,
       .contact-content {
         grid-template-columns: 1fr;
-        gap: 2rem;
-        padding: 2rem 0;
-        overflow-y: auto;
+        gap: 2.5rem;
+        width: 100%;
       }
-      .heading-line {
-        white-space: normal;
+      .heading-line { white-space: normal; }
+      .about-heading { text-align: center; }
+      .about-left { text-align: center; }
+      .about-right { min-height: 0; }        /* size to content */
+
+      /* Offerings: circles wrap; deliverables shown by default (no hover
+         needed on touch — overrides the hover-collapse rule by width). */
+      .circles-row {
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 2.75rem 1.5rem;
+        padding-top: 0;
       }
-      .cards-grid {
-        grid-template-columns: repeat(3, 1fr);
+      .offer-item { flex: 0 0 42%; max-width: 42%; }
+      .offer-detail {
+        max-height: none;
+        opacity: 1;
+        overflow: visible;
+        transform: none;
+        margin-top: 0.55rem;
+      }
+      .offer-item .offer-tagline { opacity: 1; }
+
+      /* Footer flows after the form instead of pinning to the viewport */
+      .contact-footer {
+        position: static;
+        margin-top: 2.5rem;
       }
     }
+
     @media (max-width: 600px) {
-      .cards-grid { grid-template-columns: 1fr 1fr; }
-      #nav-dots { right: 1rem; }
+      .section { padding: 5rem 1rem; }
+      #contact { padding: 5rem 1rem; }
+      .offer-item { flex: 0 0 80%; max-width: 80%; }
+      .offerings-header { font-size: clamp(2rem, 9vw, 2.6rem); }
+      .about-cta { align-self: center; }
+      /* 4 nav items on a narrow screen — tighten so they don't overflow */
+      .hero-nav { gap: 0.9rem; }
+      .hero-nav a { font-size: 0.58rem; letter-spacing: 0.1em; }
     }
   </style>
 </head>
@@ -666,17 +865,22 @@
 
   <!-- Fixed top-right nav — persists across all pages -->
   <nav class="hero-nav">
+    <a href="#hero">Home</a>
     <a href="#about">About</a>
-    <a href="#offerings">Work</a>
+    <a href="#offerings">Services</a>
     <a href="#contact">Contact</a>
   </nav>
 
-  <!-- Fixed nav dots -->
-  <nav id="nav-dots">
-    <button class="nav-dot active" data-index="0" aria-label="Hero"></button>
-    <button class="nav-dot"        data-index="1" aria-label="About"></button>
-    <button class="nav-dot"        data-index="2" aria-label="Offerings"></button>
-    <button class="nav-dot"        data-index="3" aria-label="Contact"></button>
+  <!-- Fixed scroll-progress rail — glowing marker moves with scroll,
+       section labels appear on hover -->
+  <nav id="progress-nav" aria-label="Section progress">
+    <div class="pnav-track"></div>
+    <div class="pnav-fill"></div>
+    <div class="pnav-marker"></div>
+    <button class="pnav-point" data-index="0" style="top:0%"  aria-label="Home"><span class="pnav-label">Home</span></button>
+    <button class="pnav-point" data-index="1" style="top:33.333%" aria-label="About"><span class="pnav-label">About</span></button>
+    <button class="pnav-point" data-index="2" style="top:66.666%" aria-label="Services"><span class="pnav-label">Services</span></button>
+    <button class="pnav-point" data-index="3" style="top:100%" aria-label="Contact"><span class="pnav-label">Contact</span></button>
   </nav>
 
   <!-- ══════════ SECTION 1: HERO ══════════ -->
@@ -689,15 +893,15 @@
              xmlns="http://www.w3.org/2000/svg"
              role="img"
              aria-label="cachcreative">
-          <text x="2" y="68"
+          <text x="285" y="68" text-anchor="middle"
                 font-family="Marcellus, serif"
                 font-size="72"
                 fill="white">cachcreative</text>
         </svg>
-        <p class="hero-tagline">Say less. Mean more.</p>
+        <p class="hero-tagline">Strategy, content and design for brands and creators ready to grow.</p>
       </div>
       <div class="scroll-cue">
-        <span class="scroll-cue-label">scroll</span>
+        <span class="scroll-cue-label">Discover Cach</span>
         <div class="scroll-cue-line"></div>
       </div>
     </div>
@@ -709,20 +913,22 @@
       <div class="about-left">
         <!-- FIX 1: two clean heading lines, each a block — no word splitting -->
         <h2 class="about-heading" id="about-heading">
-          <span class="heading-line">One vision.</span>
-          <span class="heading-line">No shortcuts.</span>
+          <span class="heading-line">Creative that looks</span>
+          <span class="heading-line">good, works smarter,</span>
+          <span class="heading-line">and does more.</span>
         </h2>
       </div>
       <div class="about-right">
         <p class="about-body" id="about-body">
-          Cach Creative was built on a simple conviction. Good strategy and real design don't have to be two separate conversations. Every project gets the full picture: the thinking and the craft, working together from day one.
+          Cach Creative brings strategy, content and design into one joined-up process, so your ideas do not just look good, they have a clear reason to exist. We help brands, creators and organisations show up with intention, connect with the right people, and turn creative work into something that actually supports growth.
         </p>
         <blockquote class="thought-annotation" id="annotation-1">
-          The kind of agency that does less, better.
+          Smart creative, backed by strategy and shaped around your goals.
         </blockquote>
         <blockquote class="thought-annotation" id="annotation-2">
-          Every decision has a reason. Every reason has a result.
+          We do not just execute ideas. We help shape them into something people notice, understand and remember.
         </blockquote>
+        <button type="button" class="about-cta" id="about-cta" data-goto="2">See what we do</button>
       </div>
     </div>
   </section>
@@ -730,97 +936,68 @@
   <!-- ══════════ SECTION 3: OFFERINGS ══════════ -->
   <section class="section" id="offerings" data-index="2">
     <div class="offerings-content" data-content>
-      <h2 class="offerings-header">What we do.</h2>
-      <div class="cards-grid">
+      <h2 class="offerings-header">How We Help You Grow</h2>
+      <p class="offerings-sub">Choose the support you need, or let us help shape it.</p>
+      <div class="circles-row">
 
-        <div class="card-frame">
-          <article class="card" style="border-top: 3px solid #FC2F78">
-            <div class="card-image" style="background: #FC2F78">
-              <span class="card-title">Social</span>
-            </div>
-            <div class="card-post-header">
-              <div class="card-avatar"></div>
-              <div class="card-username"></div>
-            </div>
-            <p class="card-desc">Content that stops the scroll. Strategy that builds the account.</p>
-            <div class="card-interactions">
-              <span class="card-icon">♡</span>
-              <span class="card-icon">💬</span>
-              <span class="card-icon">🔖</span>
-            </div>
-          </article>
+        <div class="offer-item">
+          <div class="offer-circle" style="background:#FC2F78">Social</div>
+          <div class="offer-copy">
+            <p class="offer-tagline">Content people follow for, come back to, and talk about.</p>
+            <ul class="offer-detail">
+              <li>Content planning</li>
+              <li>Creation &amp; posting</li>
+              <li>Community support</li>
+            </ul>
+          </div>
         </div>
 
-        <div class="card-frame">
-          <article class="card" style="border-top: 3px solid #1C43CA">
-            <div class="card-image" style="background: #1C43CA">
-              <span class="card-title">Strategy</span>
-            </div>
-            <div class="card-post-header">
-              <div class="card-avatar"></div>
-              <div class="card-username"></div>
-            </div>
-            <p class="card-desc">Direction before action. Every campaign starts with a clear why.</p>
-            <div class="card-interactions">
-              <span class="card-icon">♡</span>
-              <span class="card-icon">💬</span>
-              <span class="card-icon">🔖</span>
-            </div>
-          </article>
+        <div class="offer-item">
+          <div class="offer-circle" style="background:#1C43CA">Strategy</div>
+          <div class="offer-copy">
+            <p class="offer-tagline">Big thinking shaped into clear, actionable moves.</p>
+            <ul class="offer-detail">
+              <li>Audits &amp; insights</li>
+              <li>Content direction</li>
+              <li>Strategy playbooks</li>
+            </ul>
+          </div>
         </div>
 
-        <div class="card-frame">
-          <article class="card" style="border-top: 3px solid #F18D44">
-            <div class="card-image" style="background: #F18D44">
-              <span class="card-title">Design</span>
-            </div>
-            <div class="card-post-header">
-              <div class="card-avatar"></div>
-              <div class="card-username"></div>
-            </div>
-            <p class="card-desc">Identity, assets, and interfaces built to last and built to convert.</p>
-            <div class="card-interactions">
-              <span class="card-icon">♡</span>
-              <span class="card-icon">💬</span>
-              <span class="card-icon">🔖</span>
-            </div>
-          </article>
+        <div class="offer-item">
+          <div class="offer-circle" style="background:#F18D44">Design</div>
+          <div class="offer-copy">
+            <p class="offer-tagline">Visuals that look sharp, feel intentional, and do the job.</p>
+            <ul class="offer-detail">
+              <li>Social templates</li>
+              <li>Brand kits</li>
+              <li>Visual systems</li>
+            </ul>
+          </div>
         </div>
 
-        <div class="card-frame">
-          <article class="card" style="border-top: 3px solid #000000">
-            <div class="card-image" style="background: #000000">
-              <span class="card-title">Consultancy</span>
-            </div>
-            <div class="card-post-header">
-              <div class="card-avatar"></div>
-              <div class="card-username"></div>
-            </div>
-            <p class="card-desc">Honest perspective. Smart recommendations. No agency fluff.</p>
-            <div class="card-interactions">
-              <span class="card-icon">♡</span>
-              <span class="card-icon">💬</span>
-              <span class="card-icon">🔖</span>
-            </div>
-          </article>
+        <div class="offer-item">
+          <div class="offer-circle" style="background:#111111">Consultancy</div>
+          <div class="offer-copy">
+            <p class="offer-tagline">Outside perspective with practical steps your team can actually use.</p>
+            <ul class="offer-detail">
+              <li>Workflow diagnosis</li>
+              <li>Team structure</li>
+              <li>Process fixes</li>
+            </ul>
+          </div>
         </div>
 
-        <div class="card-frame">
-          <article class="card" style="border-top: 3px solid #FC2F78">
-            <div class="card-image" style="background: #FC2F78">
-              <span class="card-title">Marketing</span>
-            </div>
-            <div class="card-post-header">
-              <div class="card-avatar"></div>
-              <div class="card-username"></div>
-            </div>
-            <p class="card-desc">Paid and organic. Short-form and long-game. Always intentional.</p>
-            <div class="card-interactions">
-              <span class="card-icon">♡</span>
-              <span class="card-icon">💬</span>
-              <span class="card-icon">🔖</span>
-            </div>
-          </article>
+        <div class="offer-item">
+          <div class="offer-circle" style="background:#FC2F78">Marketing</div>
+          <div class="offer-copy">
+            <p class="offer-tagline">Connecting your brand to the people most likely to care.</p>
+            <ul class="offer-detail">
+              <li>Launch planning</li>
+              <li>Audience positioning</li>
+              <li>Performance insights</li>
+            </ul>
+          </div>
         </div>
 
       </div>
@@ -839,20 +1016,24 @@
         <p class="sub-copy">
           Whether you know exactly what you need or just know something has to change, we're the call worth making.
         </p>
+        <p class="contact-email">
+          Prefer not to fill in a form? Email us at
+          <a href="mailto:contact@cachcreative.co.za">contact@cachcreative.co.za</a>
+        </p>
         <div class="contact-wordmark">
           <svg viewBox="0 0 300 54" overflow="visible"
                xmlns="http://www.w3.org/2000/svg"
                aria-label="cachcreative">
             <text id="wordmark-text" x="0" y="43"
                   font-family="Marcellus, serif"
-                  font-size="42"><tspan fill="#FC2F78">c</tspan><tspan fill="#F18D44">ac</tspan><tspan fill="#1C43CA">hcreative</tspan></text>
+                  font-size="42" fill="#ffffff">cachcreative</text>
             <circle id="wordmark-dot" cx="0" cy="13" r="3" fill="#FC2F78"/>
           </svg>
         </div>
       </div>
 
       <div class="form-card">
-        <form action="mailto:contact@cach.co.za" method="POST" enctype="text/plain">
+        <form action="mailto:contact@cachcreative.co.za" method="POST" enctype="text/plain">
           <div class="form-group">
             <label for="f-name">Name</label>
             <input type="text" id="f-name" name="name" required autocomplete="name">
@@ -874,6 +1055,7 @@
       </div>
 
     </div>
+    <p class="contact-footer">© 2026 Cach Creative. All rights reserved.</p>
   </section>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
