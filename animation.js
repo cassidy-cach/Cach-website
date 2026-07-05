@@ -136,6 +136,25 @@ function activateBgLayer(idx) {
   });
 }
 
+/* ── Mobile section entrances ──
+   On mobile the scroll happens on <body>, which ScrollTrigger (watching the
+   window) can't see — so its onEnter never fires and content stays hidden.
+   Instead we check section positions from the scroll handler (which DOES fire
+   on mobile) and play each entrance once when its top scrolls up into view.
+   getBoundingClientRect is height-independent, so tall sections work too. */
+const mobilePlayed = new Set();
+function checkMobileEntrances() {
+  if (navJumpIndex !== null) return;                 // nav jumps play their own
+  const vh = window.innerHeight || document.documentElement.clientHeight || 800;
+  sections.forEach((sec, idx) => {
+    if (idx === 0 || mobilePlayed.has(idx)) return;
+    if (sec.getBoundingClientRect().top < vh * 0.7) { // section has entered view
+      mobilePlayed.add(idx);
+      playSectionEntrance(idx);
+    }
+  });
+}
+
 /* ══════════════════════════════════════════════════════════
    BACKGROUND SCROLL CROSS-FADE (desktop)
    Each page keeps its own solid colour. During scroll the
@@ -147,7 +166,10 @@ function setupBgBlend() {
 
   function update() {
     updateProgressRail();             // marker runs on all screen sizes
-    if (isSmallScreen()) return;      // mobile uses discrete bg (observer)
+    if (isSmallScreen()) {            // mobile: bg via observer; entrances here
+      checkMobileEntrances();
+      return;
+    }
     const vh = window.innerHeight ||
                document.documentElement.clientHeight ||
                (first ? first.offsetHeight : 0) || 800;
@@ -456,12 +478,12 @@ function setupScrollTransitions() {
     onEnterBack: () => zIn(heroInner)
   });
 
-  /* ── About ── */
+  /* ── About ── (desktop only; mobile entrances run via the observer) ── */
   ScrollTrigger.create({
     trigger: '#about', start: 'top 40%',
-    onEnter:     () => { if (navJumpIndex !== null) return; zIn(aboutContent); animateAboutContent(); },
+    onEnter:     () => { if (navJumpIndex !== null || isSmallScreen()) return; zIn(aboutContent); animateAboutContent(); },
     onLeave:     () => zOut(aboutContent),
-    onEnterBack: () => { if (navJumpIndex !== null) return; zIn(aboutContent); animateAboutContent(); },
+    onEnterBack: () => { if (navJumpIndex !== null || isSmallScreen()) return; zIn(aboutContent); animateAboutContent(); },
     onLeaveBack: () => zOut(aboutContent)
   });
 
@@ -470,13 +492,13 @@ function setupScrollTransitions() {
   ScrollTrigger.create({
     trigger: '#offerings', start: 'top 52%',
     onEnter: () => {
-      if (navJumpIndex !== null) return;
+      if (navJumpIndex !== null || isSmallScreen()) return;
       setupOfferings();
       zIn(offeringsContent, animateOfferings);
     },
     onLeave:     () => zOut(offeringsContent),
     onEnterBack: () => {
-      if (navJumpIndex !== null) return;
+      if (navJumpIndex !== null || isSmallScreen()) return;
       setupOfferings();
       zIn(offeringsContent, animateOfferings);
     },
@@ -486,9 +508,9 @@ function setupScrollTransitions() {
   /* ── Contact — Z-axis IS the animation (gentle settle) ── */
   ScrollTrigger.create({
     trigger: '#contact', start: 'top 52%',
-    onEnter:     () => { if (navJumpIndex !== null) return; zIn(contactContent); gsap.delayedCall(0.75, dotJumpToForm); },
+    onEnter:     () => { if (navJumpIndex !== null || isSmallScreen()) return; zIn(contactContent); gsap.delayedCall(0.75, dotJumpToForm); },
     onLeave:     () => zOut(contactContent),
-    onEnterBack: () => { if (navJumpIndex !== null) return; zIn(contactContent); gsap.delayedCall(0.75, dotJumpToForm); },
+    onEnterBack: () => { if (navJumpIndex !== null || isSmallScreen()) return; zIn(contactContent); gsap.delayedCall(0.75, dotJumpToForm); },
     onLeaveBack: () => zOut(contactContent)
   });
 }
