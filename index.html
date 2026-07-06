@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cach Creative</title>
 
+  <!-- Tab icon: the brand pink dot (crisp at any size) -->
+  <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='13' fill='%23FC2F78'/%3E%3C/svg%3E">
+  <!-- Fallback for browsers that don't take SVG favicons -->
+  <link rel="alternate icon" href="assets/logo-icon.png">
+  <link rel="apple-touch-icon" href="assets/logo-icon.png">
+
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Marcellus&display=block" rel="stylesheet">
@@ -491,6 +498,8 @@
       gap: 1.1rem;
     }
     .offer-circle {
+      position: relative;
+      overflow: hidden;
       width: clamp(96px, 12vw, 158px);
       height: clamp(96px, 12vw, 158px);
       border-radius: 50%;
@@ -504,11 +513,26 @@
       color: #ffffff;
       line-height: 1.1;
       box-shadow:
-        0 0 0 6px rgba(255,255,255,0.18),
-        0 10px 26px rgba(0,0,0,0.22),
+        0 0 0 6px rgba(255,255,255,0.18),          /* outer ring        */
+        inset 0 9px 16px rgba(255,255,255,0.30),   /* top inner light   */
+        inset 0 -16px 26px rgba(0,0,0,0.38),       /* bottom inner shade */
+        0 12px 30px rgba(0,0,0,0.26),              /* drop shadow        */
         0 2px 8px rgba(0,0,0,0.14);
       will-change: transform, opacity;
     }
+    /* Glossy 3D orb: bright specular highlight top-left, form shadow bottom-right */
+    .offer-circle::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 32% 26%, rgba(255,255,255,0.60) 0%, rgba(255,255,255,0.16) 20%, transparent 44%),
+        radial-gradient(circle at 72% 82%, rgba(0,0,0,0.36) 0%, transparent 56%);
+      pointer-events: none;
+      z-index: 1;
+    }
+    .offer-circle > span { position: relative; z-index: 2; }
     .offer-copy { width: 100%; }
     .offer-tagline {
       font-family: 'Glacial Indifference', sans-serif;
@@ -898,7 +922,7 @@
                 font-size="72"
                 fill="white">cachcreative</text>
         </svg>
-        <p class="hero-tagline">Strategy, content and design for brands and creators ready to grow.</p>
+        <p class="hero-tagline">Big ideas. Strategic execution. Real results.</p>
       </div>
       <div class="scroll-cue">
         <span class="scroll-cue-label">Discover Cach</span>
@@ -941,7 +965,7 @@
       <div class="circles-row">
 
         <div class="offer-item">
-          <div class="offer-circle" style="background:#FC2F78">Social</div>
+          <div class="offer-circle" style="background:#FC2F78"><span>Social</span></div>
           <div class="offer-copy">
             <p class="offer-tagline">Content people follow for, come back to, and talk about.</p>
             <ul class="offer-detail">
@@ -953,7 +977,7 @@
         </div>
 
         <div class="offer-item">
-          <div class="offer-circle" style="background:#1C43CA">Strategy</div>
+          <div class="offer-circle" style="background:#1C43CA"><span>Strategy</span></div>
           <div class="offer-copy">
             <p class="offer-tagline">Big thinking shaped into clear, actionable moves.</p>
             <ul class="offer-detail">
@@ -965,7 +989,7 @@
         </div>
 
         <div class="offer-item">
-          <div class="offer-circle" style="background:#F18D44">Design</div>
+          <div class="offer-circle" style="background:#F18D44"><span>Design</span></div>
           <div class="offer-copy">
             <p class="offer-tagline">Visuals that look sharp, feel intentional, and do the job.</p>
             <ul class="offer-detail">
@@ -977,7 +1001,7 @@
         </div>
 
         <div class="offer-item">
-          <div class="offer-circle" style="background:#111111">Consultancy</div>
+          <div class="offer-circle" style="background:#1C43CA"><span>Consultancy</span></div>
           <div class="offer-copy">
             <p class="offer-tagline">Outside perspective with practical steps your team can actually use.</p>
             <ul class="offer-detail">
@@ -989,7 +1013,7 @@
         </div>
 
         <div class="offer-item">
-          <div class="offer-circle" style="background:#FC2F78">Marketing</div>
+          <div class="offer-circle" style="background:#FC2F78"><span>Marketing</span></div>
           <div class="offer-copy">
             <p class="offer-tagline">Connecting your brand to the people most likely to care.</p>
             <ul class="offer-detail">
@@ -1060,6 +1084,6 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-  <script src="animation.js"></script>
+  <script src="animation.js?v=5"></script>
 </body>
 </html>
