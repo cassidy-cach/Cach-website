@@ -144,16 +144,22 @@ function activateBgLayer(idx) {
    getBoundingClientRect is height-independent, so tall sections work too. */
 const mobilePlayed = new Set();
 function checkMobileEntrances() {
-  if (navJumpIndex !== null) return;                 // nav jumps play their own
+  if (!isSmallScreen() || navJumpIndex !== null) return;   // desktop / nav handled elsewhere
   const vh = window.innerHeight || document.documentElement.clientHeight || 800;
   sections.forEach((sec, idx) => {
     if (idx === 0 || mobilePlayed.has(idx)) return;
-    if (sec.getBoundingClientRect().top < vh * 0.7) { // section has entered view
+    if (sec.getBoundingClientRect().top < vh * 0.7) {       // section has entered view
       mobilePlayed.add(idx);
-      playSectionEntrance(idx);
+      try { playSectionEntrance(idx); } catch (e) { console.warn('entrance failed', e); }
     }
   });
 }
+
+/* Poll section positions on a timer — this fires no matter what, even when
+   scroll events never reach our handlers (the exact mobile failure here).
+   getBoundingClientRect always reports the true scroll position, so this
+   reliably reveals each section as it scrolls into view on mobile. */
+setInterval(checkMobileEntrances, 150);
 
 /* ══════════════════════════════════════════════════════════
    BACKGROUND SCROLL CROSS-FADE (desktop)
@@ -222,7 +228,16 @@ const sectionObserver = new IntersectionObserver(entries => {
     if (idx === currentSection) return;
     currentSection = idx;
     updateNavDots(idx);
-    if (isSmallScreen()) activateBgLayer(idx);   // mobile: switch bg per section
+    if (isSmallScreen()) {
+      activateBgLayer(idx);                        // mobile: switch bg per section
+      /* Mobile entrance — this observer is the one mechanism proven to fire
+         on mobile (it's what switches the backgrounds). Play each section's
+         entrance here, once, unless a nav jump is handling it. */
+      if (navJumpIndex === null && idx !== 0 && !mobilePlayed.has(idx)) {
+        mobilePlayed.add(idx);
+        try { playSectionEntrance(idx); } catch (e) { console.warn('entrance failed', e); }
+      }
+    }
     document.dispatchEvent(new CustomEvent('sectionChange', {
       detail: { index: idx, id: entry.target.id }
     }));
